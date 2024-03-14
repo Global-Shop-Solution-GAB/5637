@@ -1,0 +1,237 @@
+Program.Sub.ScreenSU.Start
+Gui.Form..Create
+Gui.Form..Caption("Fixed Overhead Breakdown")
+Gui.Form..Size(5205,2055)
+Gui.Form..MinX(0)
+Gui.Form..MinY(0)
+Gui.Form..Position(0,0)
+Gui.Form..BackColor(-2147483633)
+Gui.Form..MousePointer(0)
+Gui.Form..Event(UnLoad,Form_UnLoad)
+Gui.Form.frame1.Create(Frame)
+Gui.Form.frame1.Size(4830,915)
+Gui.Form.frame1.Position(90,75)
+Gui.Form.lbl1.Create(Label,"Machine Overhead",True,1545,255,0,75,210,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl1.Parent("frame1")
+Gui.Form.lbl2.Create(Label,"Building Overhead",True,1545,255,0,1725,210,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl2.Parent("frame1")
+Gui.Form.lbl3.Create(Label,"Fixed Overhead",True,1320,255,0,3435,210,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl3.Parent("frame1")
+Gui.Form.txt_M_Overhead.Create(TextBox,"",True,1380,300,0,120,435,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txt_M_Overhead.Parent("frame1")
+Gui.Form.txt_M_Overhead.NumericOnly(1)
+Gui.Form.txt_M_Overhead.Event(LostFocus,calculateFixedOverhead)
+Gui.Form.txt_B_Overhead.Create(TextBox,"",True,1380,300,0,1770,435,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txt_B_Overhead.Parent("frame1")
+Gui.Form.txt_B_Overhead.NumericOnly(1)
+Gui.Form.txt_B_Overhead.Event(LostFocus,calculateFixedOverhead)
+Gui.Form.txt_F_Overhead.Create(TextBox,"",True,1380,300,0,3405,435,False,0,"Arial",8,-2147483643,1)
+Gui.Form.txt_F_Overhead.Parent("frame1")
+Gui.Form.txt_F_Overhead.NumericOnly(1)
+Gui.Form.txt_F_Overhead.Locked(True)
+Gui.Form.cmdSave.Create(Button)
+Gui.Form.cmdSave.Size(855,375)
+Gui.Form.cmdSave.Position(4065,1035)
+Gui.Form.cmdSave.Caption("Save")
+Gui.Form.cmdSave.Event(Click,cmdSave_Click)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+v.Local.bSecurity.Declare
+v.Local.sGroups.Declare
+v.Local.iCnt.Declare
+f.Intrinsic.Control.Try
+	f.Intrinsic.Control.SelectCase(v.Caller.Hook)
+		f.Intrinsic.Control.Case(14840)
+			v.Passed.000063.Set("Fixed Overhead")
+		f.Intrinsic.Control.Case(14880)
+			f.Intrinsic.Control.CallSub(loadOverhead)
+			v.Local.sGroups.Redim(0, 5)
+			v.Local.sGroups(0).Set("EngMfg")
+			v.Local.sGroups(1).Set("EngDsn")
+			v.Local.sGroups(2).Set("EngInq")
+			v.Local.sGroups(3).Set("PlnrMng")
+			v.Local.sGroups(4).Set("PurMng")
+			v.Local.sGroups(5).Set("SupV")
+			
+			gui.Form.cmdSave.Enabled(False)
+			
+			f.Intrinsic.Control.For(v.Local.iCnt, 0, v.Local.sGroups.UBound, 1)
+				f.Global.Security.IsInGroup(v.Caller.User, v.Local.sGroups(v.Local.iCnt), v.Caller.CompanyCode, v.Local.bSecurity)
+				f.Intrinsic.Control.If(v.Local.bSecurity)
+					gui.Form.cmdSave.Enabled(v.Local.bSecurity)
+					f.Intrinsic.Control.ExitFor(v.Local.iCnt)
+				f.Intrinsic.Control.EndIf
+			f.Intrinsic.Control.Next(v.Local.iCnt)
+			gui.Form..Show
+	f.Intrinsic.Control.EndSelect	
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.ErrorMsg.Start
+v.Local.sError.Declare
+
+'Closes ODBC connection, default to connection : "con"
+f.Intrinsic.Control.If(v.ODBC!con.State, =, 1)
+	f.ODBC.Connection!con.Close
+f.Intrinsic.Control.EndIf
+
+'Generic Error message.
+f.Intrinsic.String.Build("Project GCG_5637_Custom_Fixed_Overhead.g2u {0}{0}Subroutine: {1}{0}Error: {2} with Description: {3}", v.Ambient.NewLine, v.Args.CurrentSub, v.Ambient.ErrorNumber, v.Ambient.ErrorDescription, v.Local.sError)
+f.Intrinsic.UI.Msgbox(v.Local.sError)
+Program.Sub.ErrorMsg.End
+
+Program.Sub.calculateFixedOverhead.Start
+v.Local.sTemp.Declare
+v.Local.f_B_Over.Declare
+v.Local.f_M_Over.Declare
+v.Local.f_F_Over.Declare
+f.Intrinsic.Control.Try	
+	v.Local.sTemp.Set(v.Screen.Form!txt_B_Overhead.Text)
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.Trim, =, "")
+		v.Local.f_B_Over.Set(0)
+	f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.IsNumeric)
+		v.Local.f_B_Over.Set(v.Local.sTemp)
+	f.Intrinsic.Control.Else
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+	
+	v.Local.sTemp.Set(v.Screen.Form!txt_M_Overhead.Text)
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.Trim, =, "")
+		v.Local.f_M_Over.Set(0)
+	f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.IsNumeric)
+		v.Local.f_M_Over.Set(v.Local.sTemp)
+	f.Intrinsic.Control.Else
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.Math.Add(v.Local.f_B_Over, v.Local.f_M_Over, v.Local.f_F_Over)
+	gui.Form.txt_F_Overhead.Text(v.Local.f_F_Over)
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.calculateFixedOverhead.End
+
+Program.Sub.Form_UnLoad.Start
+f.Intrinsic.Control.Try
+	f.Intrinsic.Control.End
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.cmdSave_Click.Start
+'000005 - Workcenter
+'000007 - Fixed Overhead
+v.Local.sWC.Declare
+v.Local.sSQL.Declare
+v.Local.sTemp.Declare
+v.Local.f_B_Over.Declare
+v.Local.f_M_Over.Declare
+v.Local.f_F_Over.Declare
+f.Intrinsic.Control.Try	
+
+	v.Local.sTemp.Set(v.Screen.Form!txt_B_Overhead.Text)
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.Trim, =, "")
+		v.Local.f_B_Over.Set(0)
+	f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.IsNumeric)
+		v.Local.f_B_Over.Set(v.Local.sTemp)
+	f.Intrinsic.Control.Else
+		f.Intrinsic.UI.Msgbox("Invalid Value in Building Overhead. Records were not saved.")
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+	
+	v.Local.sTemp.Set(v.Screen.Form!txt_M_Overhead.Text)
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.Trim, =, "")
+		v.Local.f_M_Over.Set(0)
+	f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.IsNumeric)
+		v.Local.f_M_Over.Set(v.Local.sTemp)
+	f.Intrinsic.Control.Else
+		f.Intrinsic.UI.Msgbox("Invalid Value in Machine Overhead. Records were not saved.")
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+	
+	v.Local.sTemp.Set(v.Screen.Form!txt_F_Overhead.Text)
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.IsNumeric)
+		v.Local.f_F_Over.Set(v.Local.sTemp)
+	f.Intrinsic.Control.Else
+		f.Intrinsic.UI.Msgbox("Invalid Value in Machine Overhead. Records were not saved.")
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+	
+	v.Local.sWC.Set(v.Passed.000005)
+	f.Intrinsic.Control.If(v.Local.sWC.Trim, =, "")
+		f.Intrinsic.UI.Msgbox("Please Select a Workcenter.")
+		f.Intrinsic.Control.End
+	f.Intrinsic.Control.EndIf	
+	
+	gui.Form.cmdSave.Enabled(false)
+	v.Local.sTemp.Set(" ")
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Intrinsic.String.Build("Select * from GCG_5637_CUSTOM_OVER where workcenter = '{0}'", v.Local.sWC, v.Local.sSQL)
+		f.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSQL, v.Local.sTemp)
+		f.Intrinsic.Control.If(v.Local.sTemp.Trim, =, "")
+			f.Intrinsic.String.Build("Insert into  GCG_5637_CUSTOM_OVER (WORKCENTER, MACH_OVHD, BLDG_OVHD, LAST_MOD_DATE, LAST_MOD_USER) Values ('{0}', '{1}', '{2}', '{3}', '{4}')", v.Local.sWC, v.Local.f_M_Over, v.Local.f_B_Over, v.Ambient.Date.PervasiveDate, v.Caller.User, v.Local.sSQL)
+		f.Intrinsic.Control.Else
+			f.Intrinsic.String.Build("Update GCG_5637_CUSTOM_OVER Set MACH_OVHD = '{0}', BLDG_OVHD = '{1}', LAST_MOD_DATE = '{2}', LAST_MOD_USER = '{3}'  Where WORKCENTER = '{4}'", v.Local.f_M_Over, v.Local.f_B_Over, v.Ambient.Date.PervasiveDate, v.Caller.User, v.Local.sWC, v.Local.sSQL)
+		f.Intrinsic.Control.EndIf
+		
+		f.ODBC.Connection!con.Execute(v.Local.sSQL)
+		v.Passed.000007.Set(v.Local.f_F_Over)
+	f.ODBC.Connection!con.Close
+	gui.Form.cmdSave.Enabled(true)
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.cmdSave_Click.End
+
+Program.Sub.loadOverhead.Start
+'000005 - Workcenter
+'000007 - Fixed Overhead
+v.Local.sWC.Declare
+v.Local.sSQL.Declare
+v.Local.f_B_Over.Declare
+v.Local.f_M_Over.Declare
+
+f.Intrinsic.Control.Try
+	'Check if workcenter is selected.
+'	v.Local.sWC.Set("LASR")
+	v.Local.sWC.Set(v.Passed.000005)
+	f.Intrinsic.Control.If(v.Local.sWC.Trim, =, "")
+		f.Intrinsic.UI.Msgbox("Please Select a Workcenter.")
+		f.Intrinsic.Control.End
+	f.Intrinsic.Control.EndIf	
+	
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Intrinsic.String.Build("Select Mach_ovhd from GCG_5637_CUSTOM_OVER where workcenter = '{0}'", v.Local.sWC, v.Local.sSQL)
+		f.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSQL, v.Local.f_M_Over)
+		f.Intrinsic.String.Build("Select Bldg_ovhd from GCG_5637_CUSTOM_OVER where workcenter = '{0}'", v.Local.sWC, v.Local.sSQL)
+		f.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSQL, v.Local.f_B_Over)
+	f.ODBC.Connection!con.Close
+	
+	gui.Form.txt_M_Overhead.Text(v.Local.f_M_Over)
+	gui.Form.txt_B_Overhead.Text(v.Local.f_B_Over)
+	
+	f.Intrinsic.Control.CallSub(calculateFixedOverhead)
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.loadOverhead.End
